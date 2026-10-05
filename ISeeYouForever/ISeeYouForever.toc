@@ -1,0 +1,20 @@
+## Interface: 16001
+## Title: I see you forever
+## Notes: Personal leveling journal. Records quests, gold, experience, routes, and fights for a markdown wiki.
+## Author: SkipLoading
+## Version: 0.1.0
+## SavedVariables: ISYF_DB
+## SavedVariablesPerCharacter: ISYF_Char
+## AddonCompartmentFunc: ISYF_CompartmentClick
+
+Util.lua
+Export.lua
+Core.lua
+Session.lua
+Experience.lua
+Quests.lua
+Economy.lua
+Engagements.lua
+Routes.lua
+World.lua
+UI.lua
