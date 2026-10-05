@@ -76,6 +76,9 @@ function ns.Emit(kind, category, ...)
     if ns.RefreshStatus then
         ns.RefreshStatus()
     end
+    if ns.LogLive then
+        ns.LogLive(kind, fields, time())
+    end
 end
 
 function ns.FlushEmitQueue()

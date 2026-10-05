@@ -112,6 +112,18 @@ Every box is something the addon writes down. Leave them all checked unless you 
 
 **All on** and **All off** check or uncheck every box.
 
+**Show logger** shows or hides the live logger. **Lock logger** stops it from being dragged or resized. **Show route dots** adds the map samples to the logger. Those samples are written every few seconds while you walk, so they stay off unless you want them.
+
+## 5. The live logger
+
+A small window sits on the screen while you play. It lists the last 10 things the addon wrote down, in plain words, with the time on the left. The top right shows how many notes are waiting in the save.
+
+Drag the window to move it. Drag the corner to resize it. Right-click it to open `/isy`. The place and size are remembered for every character on the account.
+
+`/isy log` shows or hides it. `/isy reset` puts it back in the middle at the default size and unlocks it.
+
+The logger only displays what is already recorded. It does not save, reload, or write the journal. Log out or `/reload` as before, then let the watcher or `export-wiki.bat` update the journal.
+
 ## If something looks wrong
 
 Open `data\characters\<your character>\check.md`. It lists problems in the recording, such as a missing zone name at login. The journal pages try to fix the obvious ones. The `check` file tells you what the raw notes actually said.

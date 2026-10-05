@@ -19,4 +19,5 @@ Routes.lua
 World.lua
 Character.lua
 Npcs.lua
+Overlay.lua
 UI.lua

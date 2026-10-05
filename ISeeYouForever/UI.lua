@@ -4,6 +4,7 @@ local window
 local statusText
 local pathBox
 local checks = {}
+local loggerChecks = {}
 
 function ns.SetWikiPath(text)
     if type(ISYF_DB) ~= "table" then
@@ -74,7 +75,7 @@ local function buildWindow()
             insets = { left = 11, right = 12, top = 12, bottom = 11 },
         })
     end
-    frame:SetSize(560, 720)
+    frame:SetSize(560, 756)
     frame:SetPoint("CENTER")
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -120,12 +121,12 @@ local function buildWindow()
     end
 
     local pathLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    pathLabel:SetPoint("BOTTOMLEFT", 16, 72)
+    pathLabel:SetPoint("BOTTOMLEFT", 16, 116)
     pathLabel:SetText("Wiki folder")
 
     pathBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
     pathBox:SetSize(500, 20)
-    pathBox:SetPoint("BOTTOMLEFT", 22, 46)
+    pathBox:SetPoint("BOTTOMLEFT", 22, 90)
     pathBox:SetAutoFocus(false)
     pathBox:SetMaxLetters(240)
     pathBox:SetFontObject(GameFontHighlightSmall)
@@ -140,6 +141,23 @@ local function buildWindow()
     pathBox:SetScript("OnEditFocusLost", function(self)
         ns.SetWikiPath(self:GetText())
     end)
+
+    local function loggerOption(key, label, x, setter, getter)
+        local check = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+        check:SetPoint("BOTTOMLEFT", x, 48)
+        check:SetChecked(getter())
+        local text = check:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        text:SetPoint("LEFT", check, "RIGHT", 0, 1)
+        text:SetText(label)
+        check:SetScript("OnClick", function(self)
+            setter(self:GetChecked())
+        end)
+        loggerChecks[key] = check
+    end
+
+    loggerOption("shown", "Show logger", 12, ns.SetLoggerShown, ns.LoggerShown)
+    loggerOption("locked", "Lock logger", 160, ns.SetLoggerLocked, ns.LoggerLocked)
+    loggerOption("routes", "Show route dots", 310, ns.SetLoggerRoutes, ns.LoggerRoutes)
 
     local allOn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     allOn:SetSize(100, 24)
@@ -175,6 +193,7 @@ local function buildWindow()
         if pathBox then
             pathBox:SetText((ISYF_DB and ISYF_DB.wikiPath) or "")
         end
+        ns.RefreshLoggerChecks()
     end)
 
     window = frame
@@ -194,8 +213,33 @@ end
 function ns.InitUI()
 end
 
+function ns.RefreshLoggerChecks()
+    if loggerChecks.shown and ns.LoggerShown then
+        loggerChecks.shown:SetChecked(ns.LoggerShown())
+    end
+    if loggerChecks.locked and ns.LoggerLocked then
+        loggerChecks.locked:SetChecked(ns.LoggerLocked())
+    end
+    if loggerChecks.routes and ns.LoggerRoutes then
+        loggerChecks.routes:SetChecked(ns.LoggerRoutes())
+    end
+end
+
 SLASH_ISEEYOUFOREVER1 = "/isy"
-SlashCmdList.ISEEYOUFOREVER = function()
+SlashCmdList.ISEEYOUFOREVER = function(msg)
+    msg = strtrim(msg or ""):lower()
+    if msg == "log" then
+        if ns.ToggleLogger then
+            ns.ToggleLogger()
+        end
+        return
+    end
+    if msg == "reset" then
+        if ns.ResetLogger then
+            ns.ResetLogger()
+        end
+        return
+    end
     ns.Toggle()
 end
 

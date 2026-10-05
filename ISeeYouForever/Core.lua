@@ -60,6 +60,7 @@ ns.frame:SetScript("OnEvent", function(_, event, ...)
         ns.InitWorld()
         ns.InitCharacter()
         ns.InitNpcs()
+        ns.InitOverlay()
         ns.InitUI()
         ns.frame:UnregisterEvent("ADDON_LOADED")
         return
