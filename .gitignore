@@ -1,4 +1,10 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Local play data and the generated journal. Players choose their own folder.
+data/characters/
+data/*.sqlite
 data/*.sqlite-journal
+wiki/index.md
+wiki/characters/

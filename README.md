@@ -46,17 +46,38 @@ py -3 tools\watch_wiki.py
 
 Leave that window open. A few seconds after each logout or `/reload`, it updates the journal. Close the window when you are done for the day.
 
-The journal appears in the `wiki` folder next to this README.
+### Choose where the journal is saved
 
-- `wiki\index.md` is the list of characters.
+The journal is your own pages. This project does not ship anyone's characters. You pick the folder, and the exporter creates it if it is missing.
+
+**In the game, this is the setting that sticks:**
+
+1. Log in and type `/isy`, then press Enter.
+2. At the bottom of the window, find **Wiki folder**.
+3. Paste the full path of the folder you want. Example: `D:\wow-journal`
+4. Press Enter. Chat confirms the folder was saved.
+
+Leave **Wiki folder** empty to use the `wiki` folder next to this README.
+
+WoW saves that path with the addon. It does not write the pages. The next logout or `/reload` is when `export-wiki.bat` or the watcher reads the path and writes the journal there. The same path is used every time after that, until you change the box and press Enter again.
+
+The exporter also writes a `data` folder beside the journal folder. If the journal is `D:\wow-journal`, the database and the `check.md` notes go in `D:\data`.
+
+**From the command line**, you can name both folders. The first is the game's `WTF` folder. The second is the journal folder:
+
+```
+py -3 tools\watch_wiki.py "D:\Games\World of Warcraft\_classic_beta_\WTF" "D:\wow-journal"
+```
+
+If **Wiki folder** in `/isy` already has a path, that path wins. The second argument is used only when the box is empty. `export-wiki.bat` follows the same rule: the `/isy` path, or this project's `wiki` folder when the box is empty.
+
+After the first export, open the folder you chose:
+
+- `index.md` is the list of characters.
 - Open a character, then open a level chapter such as `1-10`.
 - `log` is the raw diary. Do not edit those files. The other pages are rebuilt from them.
 
-If your game is not in the usual Classic Beta folder, tell the watcher where the `WTF` folder is:
-
-```
-py -3 tools\watch_wiki.py "D:\Games\World of Warcraft\_classic_beta_\WTF"
-```
+`wiki\SCHEMA.md` in this project only describes the page layout. Your characters are written into the folder you configured.
 
 ## 4. The /isy window
 
@@ -85,7 +106,7 @@ Every box is something the addon writes down. Leave them all checked unless you 
 | NPCs | Vendors, trainers, and quest givers you talk to |
 | Activity | Resting, AFK, and being on a mount |
 
-**Wiki folder** is optional. Leave it empty and the journal stays in this project's `wiki` folder. If you want the pages somewhere else, paste a full folder path, such as `D:\wow-journal`, and press Enter. The next logout uses that folder.
+**Wiki folder** is the path from the section above. Paste a full folder path and press Enter, or leave it empty for this project's `wiki` folder. The next logout writes the journal there.
 
 **All on** and **All off** check or uncheck every box.
 
