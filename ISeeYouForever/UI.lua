@@ -74,7 +74,7 @@ local function buildWindow()
             insets = { left = 11, right = 12, top = 12, bottom = 11 },
         })
     end
-    frame:SetSize(540, 560)
+    frame:SetSize(560, 720)
     frame:SetPoint("CENTER")
     frame:SetMovable(true)
     frame:EnableMouse(true)

@@ -6,6 +6,8 @@ function ns.InitSession()
             return
         end
         ns.sessionOpen = true
+        ns.sessionStarted = false
+        ns.emitQueue = {}
 
         local level = ns.Num(UnitLevel("player")) or 0
         local xp = ns.Num(UnitXP("player")) or 0
@@ -37,41 +39,93 @@ function ns.InitSession()
                 started = time(),
             }
         end
+        if ns.CaptureGear then
+            ns.CaptureGear()
+        end
 
-        local zone, sub, map, x, y = ns.Where()
-        ns.Emit(
-            "session_start",
-            nil,
-            level,
-            zone,
-            sub,
-            map,
-            x,
-            y,
-            money,
-            xp,
-            xpMax,
-            ns.PlayerName(),
-            ns.RealmName()
-        )
-        ns.Print(string.format(
-            "Recording %s from level %d. Type /isy to choose what is tracked.",
-            ns.PlayerName(),
-            level
-        ))
-        pcall(RequestTimePlayed)
+        local function emitStart()
+            if ns.sessionStarted then
+                return
+            end
+            ns.sessionStarted = true
+            local zone, sub, map, x, y = ns.Where()
+            local queued = ns.emitQueue
+            ns.emitQueue = nil
+            ns.Emit(
+                "session_start",
+                nil,
+                level,
+                zone,
+                sub,
+                map,
+                x,
+                y,
+                money,
+                xp,
+                xpMax,
+                ns.PlayerName(),
+                ns.RealmName(),
+                ns.SCHEMA or 2
+            )
+            if ns.EmitCharacter then
+                ns.EmitCharacter("login")
+            end
+            if ns.EmitActivityBaseline then
+                ns.EmitActivityBaseline()
+            end
+            if queued then
+                for i = 1, #queued do
+                    local row = queued[i]
+                    ns.Emit(row.kind, row.category, unpack(row, 1, row.n))
+                end
+            end
+            ns.Print(string.format(
+                "Recording %s from level %d. Type /isy to choose what is tracked.",
+                ns.PlayerName(),
+                level
+            ))
+            pcall(RequestTimePlayed)
+        end
+
+        local function tryStart(attempt)
+            if ns.sessionStarted then
+                return
+            end
+            local zone = ns.Str(GetZoneText())
+            if (not zone or zone == "") and attempt < 8 then
+                ns.After(0.5, function()
+                    tryStart(attempt + 1)
+                end)
+                return
+            end
+            emitStart()
+        end
+
+        ns.ForceSessionStart = emitStart
+        tryStart(0)
     end)
 
     ns.Register("PLAYER_LOGOUT", function()
         if not ns.sessionOpen or not ISYF_Char.session then
             return
         end
+        if not ns.sessionStarted and ns.ForceSessionStart then
+            ns.ForceSessionStart()
+        end
         local session = ISYF_Char.session
         local duration = time() - (session.start or time())
+        local level = ns.Num(UnitLevel("player")) or 0
+        local tracked = tonumber(ns.lastLevel) or 0
+        if tracked > level then
+            level = tracked
+        end
+        if ns.EmitBags then
+            ns.EmitBags(true)
+        end
         ns.Emit(
             "session_end",
             nil,
-            ns.Num(UnitLevel("player")) or session.level or 0,
+            level,
             duration,
             session.xp or 0,
             session.copperIn or 0,

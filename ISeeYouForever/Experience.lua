@@ -18,7 +18,16 @@ function ns.NoteLevel(level)
         return
     end
     ns.lastLevel = level
+    if ISYF_Char and ISYF_Char.session then
+        ISYF_Char.session.level = level
+    end
     ns.Emit("level", "xp", level)
+    if ns.EmitCharacter then
+        ns.EmitCharacter("level")
+    end
+    if ns.EmitBags then
+        ns.EmitBags(true)
+    end
 end
 
 function ns.InitExperience()
@@ -84,7 +93,7 @@ function ns.InitExperience()
             end
 
             if questGain > 0 then
-                ns.Emit("xp", "xp", questGain, takeRested(questGain), level, "quest", "", "", "", "", questId)
+                ns.Emit("xp", "xp", questGain, takeRested(questGain), level, "quest", "", "", "", "", questId, "")
             end
 
             local otherGain = gain - questGain
@@ -92,7 +101,7 @@ function ns.InitExperience()
                 return
             end
             local source = "other"
-            local mobName, mobLevel, mobClass, mobType = "", "", "", ""
+            local mobName, mobLevel, mobClass, mobType, npcId = "", "", "", "", ""
             if ns.fight then
                 source = "kill"
                 local mob = ns.fight.mob
@@ -104,12 +113,13 @@ function ns.InitExperience()
                     mobLevel = mob.level or ""
                     mobClass = mob.class or ""
                     mobType = mob.creatureType or ""
+                    npcId = mob.npcId or ""
                     ns.NoteFightXP(otherGain, mob)
                 else
                     ns.NoteFightXP(otherGain, nil)
                 end
             end
-            ns.Emit("xp", "xp", otherGain, takeRested(otherGain), level, source, mobName, mobLevel, mobClass, mobType, "")
+            ns.Emit("xp", "xp", otherGain, takeRested(otherGain), level, source, mobName, mobLevel, mobClass, mobType, "", npcId)
         end)
     end)
 end

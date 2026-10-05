@@ -16,11 +16,19 @@ local function snapshotTarget()
     if not name or name == "" then
         return nil
     end
+    local guid = ""
+    if type(UnitGUID) == "function" then
+        local ok, value = pcall(UnitGUID, "target")
+        if ok then
+            guid = ns.Str(value) or ""
+        end
+    end
     return {
         name = name,
         level = ns.Num(UnitLevel("target")) or "",
         class = ns.Str(UnitClassification("target")) or "",
         creatureType = ns.Str(UnitCreatureType("target")) or "",
+        npcId = ns.NpcIdFromGuid(guid),
     }
 end
 
@@ -53,7 +61,7 @@ local function rememberMob(mob, context)
     ns.lastMob = mob
     ns.lastMobAt = GetTime()
     local zone, _, map, x, y = ns.Where()
-    ns.Emit("mob", "mobs", mob.name, mob.level, mob.class, mob.creatureType, zone, map, x, y, context)
+    ns.Emit("mob", "mobs", mob.name, mob.level, mob.class, mob.creatureType, zone, map, x, y, context, mob.npcId or "")
 end
 
 function ns.InitEngagements()
@@ -98,7 +106,8 @@ function ns.InitEngagements()
             mob and mob.name or "",
             mob and mob.level or "",
             mob and mob.class or "",
-            mob and mob.creatureType or ""
+            mob and mob.creatureType or "",
+            mob and mob.npcId or ""
         )
     end)
 
@@ -131,5 +140,61 @@ function ns.InitEngagements()
                 fight.ticks or 0
             )
         end)
+    end)
+
+    local combatLogBroken = false
+    ns.Register("COMBAT_LOG_EVENT_UNFILTERED", function()
+        if combatLogBroken or not ns.sessionOpen then
+            return
+        end
+        if type(CombatLogGetCurrentEventInfo) ~= "function" then
+            combatLogBroken = true
+            return
+        end
+        local ok, _, subevent, _, _, _, _, _, destGUID, destName = pcall(CombatLogGetCurrentEventInfo)
+        if not ok then
+            combatLogBroken = true
+            return
+        end
+        subevent = ns.Str(subevent)
+        if subevent ~= "PARTY_KILL" and subevent ~= "UNIT_DIED" then
+            return
+        end
+        if subevent == "UNIT_DIED" and ns.sawPartyKill then
+            return
+        end
+        local npcId = ns.NpcIdFromGuid(destGUID)
+        local name = ns.Str(destName) or ""
+        if subevent == "UNIT_DIED" then
+            local fight = ns.fight
+            local mob = fight and fight.mob
+            local same = mob and ((name ~= "" and mob.name == name) or (npcId ~= "" and mob.npcId == npcId))
+            if not same then
+                return
+            end
+        else
+            ns.sawPartyKill = true
+        end
+        local mob = ns.fight and ns.fight.mob
+        if (not mob or mob.name ~= name) and ns.LastMob then
+            local recent = ns.LastMob()
+            if recent and (recent.name == name or name == "") then
+                mob = recent
+            end
+        end
+        local zone, _, map, x, y = ns.Where()
+        ns.Emit(
+            "kill",
+            "fights",
+            name ~= "" and name or (mob and mob.name or ""),
+            npcId ~= "" and npcId or (mob and mob.npcId or ""),
+            mob and mob.level or "",
+            mob and mob.class or "",
+            mob and mob.creatureType or "",
+            zone,
+            map,
+            x,
+            y
+        )
     end)
 end

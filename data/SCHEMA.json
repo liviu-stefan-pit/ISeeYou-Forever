@@ -1,0 +1,1240 @@
+{
+  "bags": "A bags event replaces inventory. A bag_delta event is the change since the previous bags or bag_delta event.",
+  "coordinates": "x and y are map fractions times 10000",
+  "kills": "inferred is 1 when the combat log did not report the kill and it was derived from a fight window.",
+  "kinds": {
+    "afk": [
+      {
+        "name": "afk",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "alive": [
+      {
+        "name": "zone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "bag_delta": [
+      {
+        "name": "changes",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "bags": [
+      {
+        "name": "slots",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      }
+    ],
+    "bind": [
+      {
+        "name": "zone",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "subzone",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "character": [
+      {
+        "name": "guid",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "class",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "race",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "faction",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "sex",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "talents",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "gear",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "reason",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "death": [
+      {
+        "name": "zone",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "fight_end": [
+      {
+        "name": "duration",
+        "required": false,
+        "since": 1,
+        "type": "float"
+      },
+      {
+        "name": "xp",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "named",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "ticks",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "fight_start": [
+      {
+        "name": "zone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "mob_name",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "mob_level",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "classification",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "creature_type",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "npc_id",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "gear": [
+      {
+        "name": "slot",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "old_item",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "new_item",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "group": [
+      {
+        "name": "size",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "kill": [
+      {
+        "name": "name",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "npc_id",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "classification",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "creature_type",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "level": [
+      {
+        "name": "level",
+        "required": true,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "loot": [
+      {
+        "name": "text",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "item_id",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "count",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "quality",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "mob": [
+      {
+        "name": "name",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "classification",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "creature_type",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "context",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "npc_id",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "money": [
+      {
+        "name": "delta",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "balance",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "source",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "detail",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      }
+    ],
+    "mount": [
+      {
+        "name": "mounted",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "npc": [
+      {
+        "name": "kind",
+        "required": true,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "name",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "npc_id",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "npc_close": [
+      {
+        "name": "kind",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "duration",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "played": [
+      {
+        "name": "total_seconds",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "level_seconds",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "quest_abandon": [
+      {
+        "name": "quest_id",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "title",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "quest_accept": [
+      {
+        "name": "quest_id",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "title",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "giver_name",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "giver_id",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "quest_progress": [
+      {
+        "name": "quest_id",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "title",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "objective",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "done",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "required",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "quest_ready": [
+      {
+        "name": "quest_id",
+        "required": true,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "title",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "quest_seen": [
+      {
+        "name": "quest_id",
+        "required": true,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "title",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "quest_turnin": [
+      {
+        "name": "quest_id",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "title",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "xp",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "copper",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "accept_unix",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "duration",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "npc_name",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "npc_id",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "reward_item",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "rep": [
+      {
+        "name": "name",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "reaction",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "standing",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "rest": [
+      {
+        "name": "resting",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "route": [
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      }
+    ],
+    "session_end": [
+      {
+        "name": "level",
+        "required": true,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "seconds",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "xp",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "copper_in",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "copper_out",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "session_start": [
+      {
+        "name": "level",
+        "required": true,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "zone",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "subzone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "money",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "xp",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "xp_max",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "name",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "realm",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "schema",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "skill": [
+      {
+        "name": "text",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      }
+    ],
+    "spell_learned": [
+      {
+        "name": "spell_id",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "name",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "taxi_end": [
+      {
+        "name": "destination",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "zone",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 2,
+        "type": "int"
+      }
+    ],
+    "taxi_start": [
+      {
+        "name": "origin",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      },
+      {
+        "name": "destination",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "travel": [
+      {
+        "name": "method",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "origin",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "destination",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      }
+    ],
+    "unghost": [
+      {
+        "name": "zone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ],
+    "xp": [
+      {
+        "name": "amount",
+        "required": true,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "rested",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "level",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "source",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "mob_name",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "mob_level",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "classification",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "creature_type",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "quest_id",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "npc_id",
+        "required": false,
+        "since": 2,
+        "type": "str"
+      }
+    ],
+    "zone": [
+      {
+        "name": "zone",
+        "required": true,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "subzone",
+        "required": false,
+        "since": 1,
+        "type": "str"
+      },
+      {
+        "name": "map",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "x",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      },
+      {
+        "name": "y",
+        "required": false,
+        "since": 1,
+        "type": "int"
+      }
+    ]
+  },
+  "money": "copper",
+  "segments": "dead, combat, taxi, npc, afk, moving, rest, idle. Higher priority wins when they overlap.",
+  "version": 2
+}

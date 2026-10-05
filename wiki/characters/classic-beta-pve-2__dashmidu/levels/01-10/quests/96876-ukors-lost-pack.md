@@ -11,8 +11,8 @@ duration_seconds: 0
 
 # Ukor's Lost Pack
 
-Quest 96876 for Dashmidu-Felneck.
+Quest 96876 for Dashmidu.
 
-- Accepted: 2026-10-05T17:27:45Z
+- Already in progress at the turn-in. The accept line was logged as the quest log updated.
 - Turned in: 2026-10-05T17:27:45Z
 - Reward: 525 XP, 1s 75c

@@ -4,6 +4,24 @@ local sampler
 local lastMap, lastX, lastY, lastAt
 local lastZoneKey = ""
 
+local function sampleMount()
+    if not ns.Enabled("activity") or not ns.sessionOpen or not ns.sessionStarted then
+        return
+    end
+    local mounted = 0
+    if type(IsMounted) == "function" then
+        local ok, value = pcall(IsMounted)
+        if ok and ns.Flag(value) == true then
+            mounted = 1
+        end
+    end
+    if mounted == ns.lastMounted then
+        return
+    end
+    ns.lastMounted = mounted
+    ns.Emit("mount", "activity", mounted)
+end
+
 local function sampleRoute(force)
     if not ns.Enabled("routes") or not ns.sessionOpen then
         return
@@ -45,6 +63,7 @@ function ns.InitRoutes()
         end
         wait = 0
         sampleRoute(false)
+        sampleMount()
     end)
     ns.SyncRouteSampler()
 

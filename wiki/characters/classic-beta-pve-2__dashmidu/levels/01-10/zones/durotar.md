@@ -1,7 +1,7 @@
 ---
 type: zone
 name: "Durotar"
-seconds: 165
+seconds: 167
 xp: 772
 deaths: 0
 quests: 1
@@ -9,7 +9,7 @@ quests: 1
 
 # Durotar
 
-- Time: 2m 45s
+- Time: 2m 47s
 - Experience: 772
 - Deaths: 0
 - Quests turned in: 1

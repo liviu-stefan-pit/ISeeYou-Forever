@@ -2,18 +2,15 @@ local addonName, ns = ...
 
 local repSeeded = false
 local repCache = {}
-local lastBag = ""
-local lastBagAt = 0
+local lastBag = nil
+local bagCounts = nil
 
-local function bagSnapshot()
-    if not ns.Enabled("bags") or not C_Container then
-        return
-    end
-    if not C_Container.GetContainerNumSlots or not C_Container.GetContainerItemInfo then
-        return
-    end
+local function readBags()
     local counts = {}
     local ids = {}
+    if not C_Container or not C_Container.GetContainerNumSlots or not C_Container.GetContainerItemInfo then
+        return counts, ids, ""
+    end
     for bag = 0, 4 do
         local slots = ns.Num(C_Container.GetContainerNumSlots(bag)) or 0
         for slot = 1, slots do
@@ -37,17 +34,61 @@ local function bagSnapshot()
         local itemId = ids[i]
         parts[#parts + 1] = tostring(itemId) .. ":" .. tostring(counts[itemId])
     end
-    local text = table.concat(parts, ",")
-    local now = time()
-    if text == lastBag and (now - lastBagAt) < 20 then
+    return counts, ids, table.concat(parts, ",")
+end
+
+function ns.EmitBags(force)
+    if not ns.Enabled("bags") then
         return
     end
-    if text == lastBag then
+    local counts, _, text = readBags()
+    if not force and text == lastBag then
         return
     end
+    if force or not bagCounts then
+        bagCounts = counts
+        lastBag = text
+        ns.bagsReady = true
+        ns.Emit("bags", "bags", text)
+        return
+    end
+    local parts = {}
+    local seen = {}
+    for itemId, count in pairs(counts) do
+        seen[itemId] = true
+        local delta = count - (bagCounts[itemId] or 0)
+        if delta ~= 0 then
+            if delta > 0 then
+                parts[#parts + 1] = tostring(itemId) .. ":+" .. tostring(delta)
+            else
+                parts[#parts + 1] = tostring(itemId) .. ":" .. tostring(delta)
+            end
+        end
+    end
+    for itemId, previous in pairs(bagCounts) do
+        if not seen[itemId] and previous ~= 0 then
+            parts[#parts + 1] = tostring(itemId) .. ":-" .. tostring(previous)
+        end
+    end
+    table.sort(parts)
+    bagCounts = counts
     lastBag = text
-    lastBagAt = now
-    ns.Emit("bags", "bags", text)
+    if #parts > 0 then
+        ns.Emit("bag_delta", "bags", table.concat(parts, ","))
+    end
+end
+
+local function bagSnapshot()
+    if not ns.Enabled("bags") or not C_Container then
+        return
+    end
+    if not C_Container.GetContainerNumSlots or not C_Container.GetContainerItemInfo then
+        return
+    end
+    if not ns.bagsReady then
+        return
+    end
+    ns.EmitBags(false)
 end
 
 local function factionRows()
@@ -89,7 +130,8 @@ function ns.InitWorld()
     ns.Register("CHAT_MSG_LOOT", function(_, message)
         local text = ns.Str(message)
         if text and text ~= "" then
-            ns.Emit("loot", "loot", text)
+            local itemId, count, quality = ns.ParseLoot(text)
+            ns.Emit("loot", "loot", text, itemId, count, quality)
         end
     end)
 
@@ -162,13 +204,90 @@ function ns.InitWorld()
         end
     end)
 
+    local function flagState(reader)
+        if type(reader) ~= "function" then
+            return 0
+        end
+        local ok, value = pcall(reader, "player")
+        if ok and ns.Flag(value) == true then
+            return 1
+        end
+        return 0
+    end
+
+    function ns.EmitActivityBaseline()
+        local resting = 0
+        if type(IsResting) == "function" then
+            local ok, value = pcall(IsResting)
+            if ok and ns.Flag(value) == true then
+                resting = 1
+            end
+        end
+        ns.lastRest = resting
+        ns.Emit("rest", "activity", resting)
+
+        local afk = 0
+        if type(UnitIsAFK) == "function" then
+            afk = flagState(UnitIsAFK)
+        end
+        ns.lastAfk = afk
+        ns.Emit("afk", "activity", afk)
+
+        local mounted = 0
+        if type(IsMounted) == "function" then
+            local ok, value = pcall(IsMounted)
+            if ok and ns.Flag(value) == true then
+                mounted = 1
+            end
+        end
+        ns.lastMounted = mounted
+        ns.Emit("mount", "activity", mounted)
+    end
+
+    ns.Register("PLAYER_UPDATE_RESTING", function()
+        if not ns.sessionOpen or not ns.sessionStarted then
+            return
+        end
+        local resting = 0
+        if type(IsResting) == "function" then
+            local ok, value = pcall(IsResting)
+            if ok and ns.Flag(value) == true then
+                resting = 1
+            end
+        end
+        if resting == ns.lastRest then
+            return
+        end
+        ns.lastRest = resting
+        ns.Emit("rest", "activity", resting)
+    end)
+
+    ns.Register("PLAYER_FLAGS_CHANGED", function(_, unit)
+        if not ns.sessionOpen or not ns.sessionStarted then
+            return
+        end
+        local unitName = ns.Str(unit)
+        if unitName and unitName ~= "player" then
+            return
+        end
+        local afk = 0
+        if type(UnitIsAFK) == "function" then
+            afk = flagState(UnitIsAFK)
+        end
+        if afk == ns.lastAfk then
+            return
+        end
+        ns.lastAfk = afk
+        ns.Emit("afk", "activity", afk)
+    end)
+
     ns.Register("PLAYER_ENTERING_WORLD", function()
         ns.After(1, function()
             if not ns.sessionOpen then
                 return
             end
             factionRows()
-            bagSnapshot()
+            ns.EmitBags(true)
             local size = groupSize()
             if size ~= ns.lastGroup then
                 ns.lastGroup = size

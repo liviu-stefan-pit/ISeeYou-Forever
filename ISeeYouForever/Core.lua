@@ -61,6 +61,8 @@ ns.frame:SetScript("OnEvent", function(_, event, ...)
         ns.InitEngagements()
         ns.InitRoutes()
         ns.InitWorld()
+        ns.InitCharacter()
+        ns.InitNpcs()
         ns.InitUI()
         ns.frame:UnregisterEvent("ADDON_LOADED")
         return

@@ -54,14 +54,58 @@ function ns.InitEconomy()
             setContext(name)
         end)
         ns.Register(closeEvent, function()
-            if name == "flight" then
-                local zone = ns.Str(GetZoneText()) or ""
-                ns.travelHint = { method = "taxi", origin = zone, at = GetTime() }
-                ns.Emit("travel", "travel", "taxi", zone, "")
-            end
             clearContext(name)
         end)
     end
+
+    if type(hooksecurefunc) == "function" and type(TakeTaxiNode) == "function" then
+        hooksecurefunc("TakeTaxiNode", function(index)
+            if not ns.sessionOpen then
+                return
+            end
+            index = tonumber(index)
+            local dest = ""
+            if index and type(TaxiNodeName) == "function" then
+                local ok, name = pcall(TaxiNodeName, index)
+                if ok then
+                    dest = ns.Str(name) or ""
+                end
+            end
+            local zone = ns.Str(GetZoneText()) or ""
+            ns.taxiDest = dest
+            ns.taxiOrigin = zone
+            ns.onTaxi = true
+            ns.travelHint = { method = "taxi", origin = zone, at = GetTime() }
+            ns.Emit("taxi_start", "travel", zone, dest)
+        end)
+    end
+
+    local taxiWaits = 0
+    local function finishTaxi()
+        if not ns.onTaxi then
+            taxiWaits = 0
+            return
+        end
+        if type(UnitOnTaxi) == "function" then
+            local ok, onTaxi = pcall(UnitOnTaxi, "player")
+            if ok and ns.Flag(onTaxi) == true and taxiWaits < 10 then
+                taxiWaits = taxiWaits + 1
+                ns.After(0.5, finishTaxi)
+                return
+            end
+        end
+        taxiWaits = 0
+        ns.onTaxi = false
+        local zone, _, map, x, y = ns.Where()
+        ns.Emit("taxi_end", "travel", ns.taxiDest or "", zone, map, x, y)
+        ns.taxiDest = nil
+    end
+
+    ns.Register("PLAYER_CONTROL_GAINED", function()
+        if ns.onTaxi then
+            ns.After(0.2, finishTaxi)
+        end
+    end)
 
     ns.Register("CHAT_MSG_MONEY", function()
         ns.lootMoneyAt = GetTime()

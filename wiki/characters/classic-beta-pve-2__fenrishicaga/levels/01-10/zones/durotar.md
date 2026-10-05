@@ -1,16 +1,16 @@
 ---
 type: zone
-name: "Unknown"
-seconds: 2
-xp: 0
+name: "Durotar"
+seconds: 135
+xp: 354
 deaths: 0
 quests: 0
 ---
 
-# Unknown
+# Durotar
 
-- Time: 0m 2s
-- Experience: 0
+- Time: 2m 15s
+- Experience: 354
 - Deaths: 0
 - Quests turned in: 0
 - Visits: 1

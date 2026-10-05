@@ -46,6 +46,15 @@ function ns.ApplyStats(kind, fields)
 end
 
 function ns.Emit(kind, category, ...)
+    if ns.emitQueue then
+        ns.emitQueue[#ns.emitQueue + 1] = {
+            kind = kind,
+            category = category,
+            n = select("#", ...),
+            ...,
+        }
+        return
+    end
     if not ISYF_Char or not ISYF_Char.events then
         return
     end
@@ -66,6 +75,18 @@ function ns.Emit(kind, category, ...)
     ns.ApplyStats(kind, fields)
     if ns.RefreshStatus then
         ns.RefreshStatus()
+    end
+end
+
+function ns.FlushEmitQueue()
+    local queued = ns.emitQueue
+    ns.emitQueue = nil
+    if not queued then
+        return
+    end
+    for i = 1, #queued do
+        local row = queued[i]
+        ns.Emit(row.kind, row.category, unpack(row, 1, row.n))
     end
 end
 

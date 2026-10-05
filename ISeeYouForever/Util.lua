@@ -2,6 +2,8 @@ local addonName, ns = ...
 
 ns.ADDON = addonName
 
+ns.SCHEMA = 2
+
 ns.CATEGORIES = {
     { key = "xp", label = "Experience and level-ups" },
     { key = "quests", label = "Quests" },
@@ -16,6 +18,9 @@ ns.CATEGORIES = {
     { key = "rep", label = "Reputation" },
     { key = "bags", label = "Bags" },
     { key = "group", label = "Group size" },
+    { key = "character", label = "Character, talents, and gear" },
+    { key = "npcs", label = "NPCs (vendors, trainers, quest givers)" },
+    { key = "activity", label = "Activity (rest, afk, mount, taxi)" },
 }
 
 function ns.IsSecret(value)
@@ -100,6 +105,81 @@ function ns.MapPoint()
         return map, 0, 0
     end
     return map, math.floor(x * 10000 + 0.5), math.floor(y * 10000 + 0.5)
+end
+
+function ns.NpcIdFromGuid(guid)
+    local text = ns.Str(guid)
+    if not text or text == "" then
+        return ""
+    end
+    local npcId = string.match(text, "^[Cc]reature%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+    if not npcId then
+        npcId = string.match(text, "^[Vv]ehicle%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+    end
+    return npcId or ""
+end
+
+function ns.UnitNpc(unit)
+    if not unit or type(UnitExists) ~= "function" then
+        return "", ""
+    end
+    local ok, exists = pcall(UnitExists, unit)
+    if not ok or ns.Flag(exists) ~= true then
+        return "", ""
+    end
+    local name = ns.Str(UnitName(unit)) or ""
+    local guid = ""
+    if type(UnitGUID) == "function" then
+        local guidOk, value = pcall(UnitGUID, unit)
+        if guidOk then
+            guid = ns.Str(value) or ""
+        end
+    end
+    return name, ns.NpcIdFromGuid(guid)
+end
+
+function ns.InteractNpc()
+    local name, npcId = ns.UnitNpc("npc")
+    if name ~= "" or npcId ~= "" then
+        return name, npcId
+    end
+    return ns.UnitNpc("questnpc")
+end
+
+function ns.ItemIdFromLink(link)
+    local text = ns.Str(link) or tostring(link or "")
+    if ns.IsSecret(link) then
+        return ""
+    end
+    local itemId = string.match(text, "item:(%d+)")
+    return itemId or ""
+end
+
+function ns.ParseLoot(message)
+    local text = ns.Str(message) or ""
+    local itemId = string.match(text, "item:(%d+)") or ""
+    local count = string.match(text, "x(%d+)") or ""
+    if count == "" and itemId ~= "" then
+        count = "1"
+    end
+    local quality = string.match(text, "|cnIQ(%d+):") or ""
+    if quality == "" then
+        local hex = string.match(text, "|c(%x%x%x%x%x%x%x%x)")
+        local colors = {
+            ff9d9d9d = "0",
+            ffffffff = "1",
+            ff1eff00 = "2",
+            ff0070dd = "3",
+            ffa335ee = "4",
+            ffff8000 = "5",
+            ffe6cc80 = "6",
+            ff00ccff = "7",
+        }
+        if hex then
+            quality = colors[string.lower(hex)] or ""
+        end
+    end
+    return itemId, count, quality
 end
 
 function ns.Where()
