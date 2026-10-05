@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from export_wiki import export_save, find_saves, read_lua_string, write_root_index, write_schema
+from isy.parse import clear_saved_events
 
 DEFAULT_WTF = Path(r"C:\Program Files (x86)\World of Warcraft\_classic_beta_\WTF")
 DEFAULT_WIKI = Path(__file__).resolve().parent.parent / "wiki"
@@ -61,9 +62,29 @@ def wiki_path_from_saves(saves):
     return None
 
 
-def export_all(saves, wiki):
+def clear_exported_save(save, meta):
+    try:
+        removed = clear_saved_events(save)
+    except OSError as err:
+        print(
+            "Wrote %s, but the game save could not be cleared (%s)."
+            % (meta["name"], err),
+            flush=True,
+        )
+        print("Log out of the game, then run export-wiki.bat again.", flush=True)
+        return False
+    print(
+        "Cleared %d notes from the game save for %s. The next login starts fresh."
+        % (removed, meta["name"]),
+        flush=True,
+    )
+    return True
+
+
+def export_all(saves, wiki, after_save=None):
     write_schema(wiki)
     results = []
+    failed_clear = False
     for save in saves:
         try:
             meta = export_save(save, wiki)
@@ -77,10 +98,12 @@ def export_all(saves, wiki):
                 % (meta["name"], meta["realm"], meta["events"], meta["added"]),
                 flush=True,
             )
+            if after_save is not None and after_save(save, meta) is False:
+                failed_clear = True
     write_root_index(wiki)
     if not results:
         print("Save changed, but it has no character events yet.", flush=True)
-    return results
+    return results, failed_clear
 
 
 def run_once(wtf, wiki):
@@ -91,8 +114,8 @@ def run_once(wtf, wiki):
         return 1
     chosen = wiki_path_from_saves(saves) or wiki
     print("Writing wiki to %s" % chosen, flush=True)
-    export_all(saves, chosen)
-    return 0
+    _, failed_clear = export_all(saves, chosen, after_save=clear_exported_save)
+    return 1 if failed_clear else 0
 
 
 def main():
@@ -104,7 +127,8 @@ def main():
         raise SystemExit(run_once(wtf, wiki))
     print("Watching %s" % wtf, flush=True)
     print("Wiki defaults to %s until you paste a folder in /isy." % wiki, flush=True)
-    print("The wiki updates a few seconds after you log out or /reload. Close this window to stop.", flush=True)
+    print("The wiki updates a few seconds after you log out or /reload. This window does not clear the game save.", flush=True)
+    print("Run export-wiki.bat after you log out when you want the save emptied. Close this window to stop.", flush=True)
 
     seen = {}
     pending = False

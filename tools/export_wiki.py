@@ -11,7 +11,8 @@ Usage:
 
 PATH is a character SavedVariables file (ISeeYouForever.lua) or a folder
 to search, such as WTF/Account. With no PATH, existing character logs are
-rebuilt. Export before using /isy prune.
+rebuilt. This command leaves the game save in place. export-wiki.bat
+clears it after a successful export.
 """
 
 from isy.export import export_save, main

@@ -36,7 +36,9 @@ The game only saves the notes when you **log out** or type `/reload`. If you clo
 
 The addon cannot write the journal by itself. You run one of these after you log out.
 
-**Easiest:** double-click `export-wiki.bat` in this project folder. Wait until it says it wrote your character, then press a key to close the window.
+**Easiest:** log out, then double-click `export-wiki.bat` in this project folder. Wait until it says it wrote your character and cleared the game save, then press a key to close the window.
+
+When that export succeeds, the bat deletes the copied notes from the game's save. The journal keeps them. Your `/isy` settings stay, including the wiki folder and which boxes are checked. The next login starts a new set of notes. Log out before you run it. If the game is still open, it can write the old notes back over the cleared save when you leave.
 
 **While you play:** open a command window in this project folder and run:
 
@@ -44,7 +46,7 @@ The addon cannot write the journal by itself. You run one of these after you log
 py -3 tools\watch_wiki.py
 ```
 
-Leave that window open. A few seconds after each logout or `/reload`, it updates the journal. Close the window when you are done for the day.
+Leave that window open. A few seconds after each logout or `/reload`, it updates the journal and leaves the game save alone. Close the window when you are done for the day. Run `export-wiki.bat` when you want those notes removed from the game save.
 
 ### Choose where the journal is saved
 
@@ -109,12 +111,6 @@ Every box is something the addon writes down. Leave them all checked unless you 
 **Wiki folder** is the path from the section above. Paste a full folder path and press Enter, or leave it empty for this project's `wiki` folder. The next logout writes the journal there.
 
 **All on** and **All off** check or uncheck every box.
-
-## 5. /isy prune
-
-Type `/isy prune` only when the save file has grown huge. It deletes old sessions from the game's save and keeps the last 10.
-
-Run `export-wiki.bat` first. Anything not yet copied into the journal is gone after a prune.
 
 ## If something looks wrong
 

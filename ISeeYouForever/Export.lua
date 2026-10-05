@@ -89,38 +89,3 @@ function ns.FlushEmitQueue()
         ns.Emit(row.kind, row.category, unpack(row, 1, row.n))
     end
 end
-
-function ns.Prune()
-    if not ISYF_Char or not ISYF_Char.events then
-        return
-    end
-    local keep = (ISYF_DB and tonumber(ISYF_DB.keepSessions)) or 10
-    if keep < 1 then
-        keep = 1
-    end
-    local current = ns.SessionId()
-    if current < 1 then
-        current = tonumber(ISYF_Char.sessionCount) or 1
-    end
-    local minKeep = current - keep + 1
-    if minKeep < 1 then
-        minKeep = 1
-    end
-    local kept = {}
-    local removed = 0
-    local events = ISYF_Char.events
-    for i = 1, #events do
-        local sessionId = tonumber(string.match(events[i], "^%d+\t%d+\t(%d+)\t"))
-        if sessionId and sessionId >= minKeep then
-            kept[#kept + 1] = events[i]
-        else
-            removed = removed + 1
-        end
-    end
-    ISYF_Char.events = kept
-    ns.Print(string.format(
-        "Removed %d events older than the last %d sessions. Export the wiki before pruning if those events are not in it yet.",
-        removed,
-        keep
-    ))
-end

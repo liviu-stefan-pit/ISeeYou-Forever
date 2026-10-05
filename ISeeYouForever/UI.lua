@@ -195,13 +195,7 @@ function ns.InitUI()
 end
 
 SLASH_ISEEYOUFOREVER1 = "/isy"
-SlashCmdList.ISEEYOUFOREVER = function(message)
-    message = string.lower(message or "")
-    message = string.match(message, "^%s*(.-)%s*$") or ""
-    if message == "prune" then
-        ns.Prune()
-        return
-    end
+SlashCmdList.ISEEYOUFOREVER = function()
     ns.Toggle()
 end
 

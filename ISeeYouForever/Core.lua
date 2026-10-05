@@ -20,9 +20,6 @@ function ns.InitDB()
     if type(ISYF_DB.nextId) ~= "number" then
         ISYF_DB.nextId = 1
     end
-    if type(ISYF_DB.keepSessions) ~= "number" then
-        ISYF_DB.keepSessions = 10
-    end
 
     if type(ISYF_Char) ~= "table" then
         ISYF_Char = {}

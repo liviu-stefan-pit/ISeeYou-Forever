@@ -30,19 +30,41 @@ def read_lua_string(text, index):
     return "".join(chars), index
 
 
-def extract_events(text):
+def events_table_bounds(text):
     marker = text.find('["events"]')
     if marker < 0:
         marker = text.find("['events']")
     if marker < 0:
-        return []
+        return None
     start = text.find("{", marker)
     if start < 0:
-        return []
-    events = []
+        return None
     index = start + 1
     depth = 1
     while index < len(text) and depth:
+        char = text[index]
+        if char == '"':
+            _, index = read_lua_string(text, index)
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return start, index + 1
+        index += 1
+    return None
+
+
+def extract_events(text):
+    bounds = events_table_bounds(text)
+    if bounds is None:
+        return []
+    start, end = bounds
+    events = []
+    index = start + 1
+    depth = 1
+    while index < end and depth:
         char = text[index]
         if char == '"':
             value, index = read_lua_string(text, index)
@@ -55,6 +77,25 @@ def extract_events(text):
             depth -= 1
         index += 1
     return events
+
+
+def clear_saved_events(path):
+    """Empty the events list in a SavedVariables file. Other fields stay."""
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        text = handle.read()
+    bounds = events_table_bounds(text)
+    if bounds is None:
+        return 0
+    start, end = bounds
+    count = len(extract_events(text))
+    if text[start:end].strip() == "{}":
+        return 0
+    updated = text[:start] + "{}" + text[end:]
+    temporary = path.with_suffix(".lua.tmp")
+    with temporary.open("w", encoding="utf-8", newline="") as handle:
+        handle.write(updated)
+    temporary.replace(path)
+    return count
 
 
 def parse_event(line):
