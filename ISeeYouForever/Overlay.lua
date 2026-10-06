@@ -75,6 +75,7 @@ local COLOR = {
 local frame
 local log
 local countText
+local statsText
 local grip
 
 local function cell(fields, index)
@@ -560,6 +561,14 @@ function ns.LoggerRoutes()
     return type(overlay) == "table" and overlay.routes and true or false
 end
 
+function ns.LoggerStats()
+    local overlay = ISYF_DB and ISYF_DB.overlay
+    if type(overlay) == "table" and overlay.stats ~= nil then
+        return overlay.stats and true or false
+    end
+    return true
+end
+
 local function countLabel()
     local total = 0
     if ISYF_Char and type(ISYF_Char.events) == "table" then
@@ -578,11 +587,70 @@ local function countLabel()
     return text .. " events"
 end
 
+local function groupedNumber(value)
+    local number = math.floor((tonumber(value) or 0) + 0.5)
+    if type(BreakUpLargeNumbers) == "function" then
+        local ok, formatted = pcall(BreakUpLargeNumbers, number)
+        if ok and type(formatted) == "string" then
+            return formatted
+        end
+    end
+    return tostring(number)
+end
+
+local function ratesLabel()
+    if not ns.LoggerStats() or not ns.SessionRates then
+        return ""
+    end
+    local rates = ns.SessionRates()
+    if not rates then
+        return ""
+    end
+    local eta = "waiting"
+    if rates.eta and rates.eta > 0 then
+        eta = ns.FormatDuration(rates.eta) .. " to " .. tostring(rates.nextLevel)
+    end
+    local split = ""
+    if rates.hasSplit then
+        split = string.format("  |  quest %d%% / kill %d%%", rates.questPct, rates.killPct)
+    end
+    return string.format(
+        "%s XP/hr  |  %s  |  rested %s%s",
+        groupedNumber(rates.rate),
+        eta,
+        groupedNumber(rates.rested),
+        split
+    )
+end
+
+local function layoutLog()
+    if not log then
+        return
+    end
+    local top = -28
+    if statsText then
+        if ns.LoggerStats() then
+            statsText:Show()
+            top = -44
+        else
+            statsText:Hide()
+        end
+    end
+    log:ClearAllPoints()
+    log:SetPoint("TOPLEFT", 10, top)
+    log:SetPoint("BOTTOMLEFT", 10, 8)
+    log:SetWidth(math.max(40, (frame and frame:GetWidth() or DEFAULT_WIDTH) - 24))
+end
+
 function ns.RefreshOverlay()
     if not countText then
         return
     end
     countText:SetText(countLabel())
+    if statsText then
+        statsText:SetText(ratesLabel())
+        layoutLog()
+    end
 end
 
 local function formatLine(kind, fields, when)
@@ -726,6 +794,13 @@ function ns.SetLoggerRoutes(on)
     syncChecks()
 end
 
+function ns.SetLoggerStats(on)
+    local overlay = ensureOverlay()
+    overlay.stats = on and true or false
+    ns.RefreshOverlay()
+    syncChecks()
+end
+
 function ns.ToggleLogger()
     ns.SetLoggerShown(not ns.LoggerShown())
 end
@@ -835,8 +910,14 @@ local function buildFrame()
     countText:SetJustifyH("RIGHT")
     title:SetPoint("RIGHT", countText, "LEFT", -8, 0)
 
+    statsText = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    statsText:SetPoint("TOPLEFT", 10, -26)
+    statsText:SetPoint("TOPRIGHT", -10, -26)
+    statsText:SetJustifyH("LEFT")
+    statsText:SetText("")
+
     log = CreateFrame("ScrollingMessageFrame", nil, frame)
-    log:SetPoint("TOPLEFT", 10, -28)
+    log:SetPoint("TOPLEFT", 10, -44)
     log:SetPoint("BOTTOMLEFT", 10, 8)
     log:SetFontObject(GameFontHighlightSmall)
     log:SetJustifyH("LEFT")
@@ -884,8 +965,14 @@ local function buildFrame()
     applyLayout()
     log:SetWidth(math.max(40, frame:GetWidth() - 24))
     applyChrome()
+    layoutLog()
     ns.RefreshOverlay()
     refill()
+    if C_Timer and C_Timer.NewTicker then
+        C_Timer.NewTicker(5, function()
+            ns.RefreshOverlay()
+        end)
+    end
     if ns.LoggerShown() then
         frame:Show()
     else

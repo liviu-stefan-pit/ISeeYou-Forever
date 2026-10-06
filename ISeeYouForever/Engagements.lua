@@ -64,6 +64,89 @@ local function rememberMob(mob, context)
     ns.Emit("mob", "mobs", mob.name, mob.level, mob.class, mob.creatureType, zone, map, x, y, context, mob.npcId or "")
 end
 
+local HIT_WINDOW = 10
+local HIT_LIMIT = 20
+
+local function playerGuid()
+    if ns.playerGuid and ns.playerGuid ~= "" then
+        return ns.playerGuid
+    end
+    if type(UnitGUID) ~= "function" then
+        return ""
+    end
+    local ok, value = pcall(UnitGUID, "player")
+    if ok then
+        ns.playerGuid = ns.Str(value) or ""
+    end
+    return ns.playerGuid or ""
+end
+
+function ns.NoteHit(sourceGuid, sourceName, amount, ability)
+    local now = GetTime()
+    local hits = ns.recentHits or {}
+    local kept = {}
+    for i = 1, #hits do
+        if (now - (hits[i].at or 0)) <= HIT_WINDOW then
+            kept[#kept + 1] = hits[i]
+        end
+    end
+    kept[#kept + 1] = {
+        at = now,
+        guid = sourceGuid or "",
+        name = sourceName or "",
+        amount = amount or 0,
+        ability = ability or "",
+    }
+    while #kept > HIT_LIMIT do
+        table.remove(kept, 1)
+    end
+    ns.recentHits = kept
+end
+
+function ns.DeathSummary()
+    local now = GetTime()
+    local hits = ns.recentHits or {}
+    local latest = nil
+    local seen = {}
+    local attackers = 0
+    local damage = 0
+    for i = 1, #hits do
+        local hit = hits[i]
+        if (now - (hit.at or 0)) <= HIT_WINDOW then
+            damage = damage + (hit.amount or 0)
+            local key = hit.guid
+            if not key or key == "" then
+                key = hit.name or ""
+            end
+            if key ~= "" and not seen[key] then
+                seen[key] = true
+                attackers = attackers + 1
+            end
+            if not latest or (hit.at or 0) >= (latest.at or 0) then
+                latest = hit
+            end
+        end
+    end
+    local killerName = latest and latest.name or ""
+    local killerGuid = latest and latest.guid or ""
+    local ability = latest and latest.ability or ""
+    local killerLevel = ""
+    if killerName ~= "" and ns.LastMob then
+        local mob = ns.LastMob()
+        if mob and mob.name == killerName then
+            killerLevel = mob.level or ""
+        end
+    end
+    return {
+        name = killerName,
+        id = ns.NpcIdFromGuid(killerGuid),
+        level = killerLevel,
+        ability = ability,
+        attackers = attackers,
+        damage = damage,
+    }
+end
+
 function ns.InitEngagements()
     ns.Register("PLAYER_TARGET_CHANGED", function()
         local mob = snapshotTarget()
@@ -151,12 +234,35 @@ function ns.InitEngagements()
             combatLogBroken = true
             return
         end
-        local ok, _, subevent, _, _, _, _, _, destGUID, destName = pcall(CombatLogGetCurrentEventInfo)
+        local ok, _, subevent, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _, arg12, arg13, _, arg15 =
+            pcall(CombatLogGetCurrentEventInfo)
         if not ok then
             combatLogBroken = true
             return
         end
         subevent = ns.Str(subevent)
+        local dest = ns.Str(destGUID) or ""
+        local mine = dest ~= "" and dest == playerGuid()
+        if mine then
+            local amount, ability, hitName
+            hitName = ns.Str(sourceName) or ""
+            if subevent == "SWING_DAMAGE" then
+                amount = ns.Num(arg12)
+                ability = "Melee"
+            elseif subevent == "SPELL_DAMAGE" or subevent == "SPELL_PERIODIC_DAMAGE" or subevent == "RANGE_DAMAGE" then
+                ability = ns.Str(arg13) or ""
+                amount = ns.Num(arg15)
+            elseif subevent == "ENVIRONMENTAL_DAMAGE" then
+                ability = ns.Str(arg12) or ""
+                amount = ns.Num(arg13)
+                if hitName == "" then
+                    hitName = ability
+                end
+            end
+            if ability then
+                ns.NoteHit(ns.Str(sourceGUID) or "", hitName, amount or 0, ability)
+            end
+        end
         if subevent ~= "PARTY_KILL" and subevent ~= "UNIT_DIED" then
             return
         end

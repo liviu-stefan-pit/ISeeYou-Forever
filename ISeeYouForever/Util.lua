@@ -2,7 +2,7 @@ local addonName, ns = ...
 
 ns.ADDON = addonName
 
-ns.SCHEMA = 2
+ns.SCHEMA = 3
 
 ns.CATEGORIES = {
     { key = "xp", label = "Experience and level-ups" },

@@ -387,6 +387,12 @@ def _deaths(events):
             "x": named.get("x") or 0,
             "y": named.get("y") or 0,
             "level": named.get("level") or 0,
+            "killer_name": named.get("killer_name") or "",
+            "killer_id": str(named.get("killer_id") or ""),
+            "killer_level": named.get("killer_level") or 0,
+            "ability": named.get("ability") or "",
+            "attackers": named.get("attackers") or 0,
+            "damage": named.get("damage") or 0,
         })
     return rows
 
@@ -396,7 +402,7 @@ def _add_interval(intervals, start, end, state):
         intervals.append((start, end, state))
 
 
-def _session_segments(rows):
+def session_segments(rows):
     if not rows:
         return []
     sid = rows[0]["session"]
@@ -413,7 +419,7 @@ def _session_segments(rows):
     rest_on = None
     for event in rows:
         kind = event["kind"]
-        named = event["named"]
+        named = event.get("named") or {}
         if kind == "fight_start":
             pending["combat"] = event["t"]
         elif kind == "fight_end" and "combat" in pending:
@@ -458,8 +464,10 @@ def _session_segments(rows):
     for left, right in zip(routes, routes[1:]):
         if right["t"] - left["t"] > GAP_MOVING:
             continue
-        left_at = (left["named"].get("map"), left["named"].get("x"), left["named"].get("y"))
-        right_at = (right["named"].get("map"), right["named"].get("x"), right["named"].get("y"))
+        left_named = left.get("named") or {}
+        right_named = right.get("named") or {}
+        left_at = (left_named.get("map"), left_named.get("x"), left_named.get("y"))
+        right_at = (right_named.get("map"), right_named.get("x"), right_named.get("y"))
         if left_at != right_at:
             _add_interval(intervals, left["t"], right["t"], "moving")
 
@@ -522,7 +530,7 @@ def _segments(events):
         grouped[event["session"]].append(event)
     rows = []
     for sid in order:
-        rows.extend(_session_segments(grouped[sid]))
+        rows.extend(session_segments(grouped[sid]))
     return rows
 
 

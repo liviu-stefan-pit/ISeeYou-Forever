@@ -1,9 +1,12 @@
 import shutil
 
 from isy.format import copper_text, day_key, duration_text, iso, yq
-from isy.model import stamp_levels
+from isy.maps import render_svg
+from isy.model import GAP_MOVING, session_segments, stamp_levels
 from isy.parse import field, flt, num, read_meta
 from isy.schema import schema_markdown
+
+STATES = ("dead", "combat", "taxi", "npc", "afk", "moving", "rest", "idle")
 
 BANDS = (
     (1, 10),
@@ -170,6 +173,96 @@ def _slugify_file(text):
     return slugify(text)
 
 
+def empty_states():
+    return {state: 0 for state in STATES}
+
+
+def add_seconds(totals, state, seconds):
+    if state not in totals:
+        state = "idle"
+    totals[state] += int(seconds or 0)
+
+
+def state_frontmatter(totals):
+    return ["seconds_%s: %d" % (state, int(totals.get(state, 0))) for state in STATES]
+
+
+def time_spent_section(totals):
+    total = sum(int(totals.get(state, 0)) for state in STATES)
+    lines = ["## Time spent", ""]
+    if total <= 0:
+        lines.append("No time recorded.")
+        lines.append("")
+        return lines
+    for state in STATES:
+        seconds = int(totals.get(state, 0))
+        if seconds <= 0:
+            continue
+        pct = int(round(100.0 * seconds / total))
+        filled = int(round(20.0 * seconds / total))
+        if filled < 0:
+            filled = 0
+        elif filled > 20:
+            filled = 20
+        bar = ("#" * filled) + ("-" * (20 - filled))
+        lines.append("- %s: %s (%d%%) `%s`" % (state, duration_text(seconds), pct, bar))
+    lines.append("")
+    return lines
+
+
+def split_route_paths(points):
+    paths = []
+    current = []
+    previous = None
+    for stamp, x_value, y_value in points:
+        if previous is not None and stamp - previous > GAP_MOVING and current:
+            paths.append(current)
+            current = []
+        current.append((x_value, y_value))
+        previous = stamp
+    if current:
+        paths.append(current)
+    return paths
+
+
+def remember_marker(markers, zone_name, map_id, kind, x_value, y_value, label):
+    if not x_value and not y_value:
+        return
+    key = (zone_name or "Unknown", str(map_id or "0"))
+    markers.setdefault(key, []).append({
+        "kind": kind,
+        "x": x_value,
+        "y": y_value,
+        "label": label,
+    })
+
+
+def table_cell(text):
+    return str(text).replace("|", "/")
+
+
+def death_sentence(death):
+    text = iso(death["t"]) + " in " + (death["zone"] or "unknown") + " at level " + (death["level"] or "?")
+    killer = death.get("killer_name") or ""
+    if not killer:
+        return text
+    level = death.get("killer_level") or ""
+    if level:
+        text += ", killed by " + killer + " (level " + str(level) + ")"
+    else:
+        text += ", killed by " + killer
+    ability = death.get("ability") or ""
+    if ability:
+        text += " with " + ability
+    try:
+        attackers = int(death.get("attackers") or 0)
+    except (TypeError, ValueError):
+        attackers = 0
+    if attackers > 1:
+        text += ", " + str(attackers) + " attackers"
+    return text
+
+
 def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
     for sub in ("sessions", "quests", "mobs", "zones", "routes"):
         fresh_dir(folder / sub)
@@ -179,6 +272,7 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
     mobs = {}
     zones = {}
     routes = {}
+    markers = {}
     current_zone = {"name": "", "start": None}
     last_t = None
 
@@ -271,6 +365,15 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
             quest["level"] = field(event, 2) or quest["level"]
             quest["giver"] = field(event, 7) or quest["giver"]
             quest["giver_id"] = field(event, 8) or quest["giver_id"]
+            remember_marker(
+                markers,
+                field(event, 3) or current_zone["name"],
+                field(event, 4),
+                "accept",
+                num(event, 5),
+                num(event, 6),
+                "Accept " + (field(event, 1) or field(event, 0)),
+            )
         elif kind == "quest_seen":
             quest = ensure_quest(quests, field(event, 0), field(event, 1))
             quest["seen"].append(event["t"])
@@ -302,6 +405,15 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
             quest["turnin_npc_id"] = field(event, 12) or quest["turnin_npc_id"]
             quest["reward_item"] = field(event, 13) or quest["reward_item"]
             session["quests"].append(field(event, 0))
+            remember_marker(
+                markers,
+                field(event, 5) or current_zone["name"],
+                field(event, 6),
+                "turnin",
+                num(event, 7),
+                num(event, 8),
+                "Turn in " + (field(event, 1) or field(event, 0)),
+            )
             zone_name = current_zone["name"]
             if zone_name and zone_name in zones:
                 zones[zone_name]["quests"] += 1
@@ -320,7 +432,7 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
         elif kind == "route":
             zone_name = field(event, 3) or current_zone["name"] or "Unknown"
             key = (event["session"], zone_name, field(event, 0, "0"))
-            routes.setdefault(key, []).append((num(event, 1), num(event, 2)))
+            routes.setdefault(key, []).append((event["t"], num(event, 1), num(event, 2)))
         elif kind == "zone":
             enter_zone(field(event, 0), event["t"])
         elif kind == "fight_start":
@@ -358,11 +470,56 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
             )
         elif kind == "death":
             zone_name = field(event, 0) or current_zone["name"]
-            session["deaths"].append((event["t"], zone_name, field(event, 4)))
+            killer_name = field(event, 5)
+            session["deaths"].append({
+                "t": event["t"],
+                "zone": zone_name,
+                "level": field(event, 4),
+                "map": field(event, 1),
+                "x": num(event, 2),
+                "y": num(event, 3),
+                "killer_name": killer_name,
+                "killer_id": field(event, 6),
+                "killer_level": field(event, 7),
+                "ability": field(event, 8),
+                "attackers": field(event, 9),
+                "damage": field(event, 10),
+            })
             if zone_name and zone_name in zones:
                 zones[zone_name]["deaths"] += 1
+            label = "Death"
+            if killer_name:
+                label += " by " + killer_name
+            remember_marker(markers, zone_name, field(event, 1), "death", num(event, 2), num(event, 3), label)
+        elif kind == "kill":
+            remember_marker(
+                markers,
+                field(event, 5) or current_zone["name"],
+                field(event, 6),
+                "kill",
+                num(event, 7),
+                num(event, 8),
+                "Kill " + (field(event, 0) or "mob"),
+            )
 
     close_zone(last_t)
+
+    grouped_rows = {}
+    for event in events:
+        grouped_rows.setdefault(event["session"], []).append(event)
+    segment_rows = []
+    for rows in grouped_rows.values():
+        segment_rows.extend(session_segments(rows))
+    session_states = {}
+    zone_states = {}
+    chapter_states = empty_states()
+    for row in segment_rows:
+        bucket = session_states.setdefault(row["session"], empty_states())
+        add_seconds(bucket, row["state"], row["seconds"])
+        add_seconds(chapter_states, row["state"], row["seconds"])
+        if row.get("zone"):
+            zone_bucket = zone_states.setdefault(row["zone"], empty_states())
+            add_seconds(zone_bucket, row["state"], row["seconds"])
 
     start_level = None
     started = None
@@ -499,6 +656,30 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
             "- Visits: " + str(zone["visits"]),
             "",
         ]
+        zone_paths = []
+        zone_markers = []
+        map_ids = set()
+        for (_session_id, route_zone, map_id), points in routes.items():
+            if route_zone != zone_name:
+                continue
+            map_ids.add(str(map_id))
+            zone_paths.extend(split_route_paths(points))
+        for (marker_zone, map_id), marks in markers.items():
+            if marker_zone != zone_name:
+                continue
+            map_ids.add(str(map_id))
+            zone_markers.extend(marks)
+        if zone_paths or zone_markers:
+            svg_name = filename[:-3] + ".svg"
+            write_page(folder / "zones" / svg_name, render_svg(zone_paths, zone_markers))
+            lines.append("![Route](" + svg_name + ")")
+            lines.append("")
+            lines.append("Deaths are crosses, quest accepts are !, turn-ins are ?, and kills are dots.")
+            lines.append("")
+            if len(map_ids) > 1:
+                lines.append("This zone used more than one map. Those paths share one drawing and are not aligned to each other.")
+                lines.append("")
+        lines.extend(time_spent_section(zone_states.get(zone_name, empty_states())))
         write_page(folder / "zones" / filename, "\n".join(lines))
 
     route_links = []
@@ -519,7 +700,18 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
             "Coordinates are percentages of the map.",
             "",
         ]
-        for x_value, y_value in points:
+        svg_name = filename[:-3] + ".svg"
+        write_page(
+            folder / "routes" / svg_name,
+            render_svg(split_route_paths(points), markers.get((zone_name, str(map_id)), [])),
+        )
+        body.append("![Route](" + svg_name + ")")
+        body.append("")
+        body.append("Deaths are crosses, quest accepts are !, turn-ins are ?, and kills are dots.")
+        body.append("")
+        body.append("## Points")
+        body.append("")
+        for _stamp, x_value, y_value in points:
             body.append("- %.2f %.2f" % (x_value / 100.0, y_value / 100.0))
         body.append("")
         write_page(folder / "routes" / filename, "\n".join(body))
@@ -559,6 +751,9 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
             "copper_in: " + str(session["copper_in"]),
             "copper_out: " + str(session["copper_out"]),
             "seconds: " + str(session["seconds"]),
+        ]
+        lines.extend(state_frontmatter(session_states.get(session["id"], empty_states())))
+        lines.extend([
             "---",
             "",
             "# Session " + str(session["id"]),
@@ -569,7 +764,8 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
             "- Money in: " + copper_text(session["copper_in"]),
             "- Money out: " + copper_text(session["copper_out"]),
             "",
-        ]
+        ])
+        lines.extend(time_spent_section(session_states.get(session["id"], empty_states())))
         if session["reported_level"] and session["reported_level"] != session["level_end"]:
             lines.append(
                 "- Recorded session end said level "
@@ -611,8 +807,8 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
         if session["deaths"]:
             lines.append("## Deaths")
             lines.append("")
-            for when, zone_name, level in session["deaths"]:
-                lines.append("- " + iso(when) + " in " + zone_name + " at level " + (level or "?"))
+            for death in session["deaths"]:
+                lines.append("- " + death_sentence(death))
             lines.append("")
         write_page(folder / "sessions" / (str(session["id"]) + ".md"), "\n".join(lines))
 
@@ -628,6 +824,9 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
             "xp: " + str(total_xp),
             "copper_in: " + str(total_in),
             "copper_out: " + str(total_out),
+        ]
+        lines.extend(state_frontmatter(chapter_states))
+        lines.extend([
             "---",
             "",
             "# Levels %d-%d" % (lo, hi),
@@ -639,9 +838,114 @@ def rebuild(folder, realm, name, events, chapter=None, elapsed=None):
             "- Deaths: " + str(total_deaths),
             "- Quests turned in: " + str(sum(1 for quest in quests.values() if quest["turnins"])),
             "",
-            "## Zones",
-            "",
-        ]
+        ])
+        lines.extend(time_spent_section(chapter_states))
+        money_totals = {}
+        for session in sessions.values():
+            for source, bucket in session["money"].items():
+                agg = money_totals.setdefault(source, {"in": 0, "out": 0})
+                agg["in"] += bucket["in"]
+                agg["out"] += bucket["out"]
+        lines.append("## Money by source")
+        lines.append("")
+        if not money_totals:
+            lines.append("None yet.")
+            lines.append("")
+        else:
+            lines.append("| Source | In | Out | Net |")
+            lines.append("| --- | --- | --- | --- |")
+            for source, bucket in sorted(money_totals.items(), key=lambda item: -(item[1]["in"] + item[1]["out"])):
+                net = bucket["in"] - bucket["out"]
+                lines.append("| %s | %s | %s | %s |" % (
+                    table_cell(source),
+                    copper_text(bucket["in"]),
+                    copper_text(bucket["out"]),
+                    copper_text(net),
+                ))
+            lines.append("")
+            lines.append("`unknown` is money the addon could not tie to a quest, loot, vendor, repair, trainer, flight, mail, auction, or trade.")
+            lines.append("")
+        ranked = []
+        for quest_id, quest in quests.items():
+            turnin = quest["turnins"][-1] if quest["turnins"] else None
+            if not turnin:
+                continue
+            duration = turnin["duration"]
+            early = [when for when in quest["accepts"] if when < turnin["t"]]
+            if not duration and early:
+                duration = max(0, turnin["t"] - early[0])
+            if duration < 30:
+                continue
+            per_minute = turnin["xp"] / (duration / 60.0)
+            ranked.append((per_minute, turnin["xp"], duration, quest_id, quest["title"]))
+        ranked.sort(key=lambda item: (-item[0], item[4].lower()))
+
+        def quest_table(heading, rows, empty):
+            lines.append("## " + heading)
+            lines.append("")
+            if not rows:
+                lines.append(empty)
+                lines.append("")
+                return
+            lines.append("| Quest | XP | Time | XP/min |")
+            lines.append("| --- | --- | --- | --- |")
+            for per_minute, xp_amount, duration, quest_id, title_text in rows:
+                link = quest_files.get(quest_id, "")
+                label = table_cell(title_text)
+                if link:
+                    label = "[" + label + "](quests/" + link + ")"
+                lines.append("| %s | %d | %s | %d |" % (label, xp_amount, duration_text(duration), round(per_minute)))
+            lines.append("")
+
+        best = ranked[:10]
+        quest_table(
+            "Best quests by XP per minute",
+            best,
+            "No turned-in quest lasted 30 seconds or more.",
+        )
+        best_ids = set(item[3] for item in best)
+        slowest = [item for item in reversed(ranked) if item[3] not in best_ids][:5]
+        if slowest:
+            quest_table("Slowest quests", slowest, "None yet.")
+        zone_rank = []
+        for zone_name, zone in zones.items():
+            if not zone["seconds"]:
+                continue
+            zone_rank.append((zone["xp"] / zone["seconds"] * 3600, zone_name, zone))
+        zone_rank.sort(key=lambda item: -item[0])
+        lines.append("## Zones by XP per hour")
+        lines.append("")
+        if not zone_rank:
+            lines.append("None yet.")
+            lines.append("")
+        else:
+            lines.append("| Zone | Time | XP | XP/hr | Deaths |")
+            lines.append("| --- | --- | --- | --- | --- |")
+            for zone_rate, zone_name, zone in zone_rank:
+                link = zone_files.get(zone_name, "")
+                label = table_cell(zone_name)
+                if link:
+                    label = "[" + label + "](zones/" + link + ")"
+                lines.append("| %s | %s | %d | %d | %d |" % (
+                    label,
+                    duration_text(zone["seconds"]),
+                    zone["xp"],
+                    round(zone_rate),
+                    zone["deaths"],
+                ))
+            lines.append("")
+        killer_counts = {}
+        for session in sessions.values():
+            for death in session["deaths"]:
+                killer = death.get("killer_name") or "unknown"
+                killer_counts[killer] = killer_counts.get(killer, 0) + 1
+        if killer_counts:
+            lines.append("## Deaths")
+            lines.append("")
+            for killer, count in sorted(killer_counts.items(), key=lambda item: (-item[1], item[0].lower())):
+                lines.append("- %s: %d" % (killer, count))
+            lines.append("")
+        lines.extend(["## Zones", ""])
         if zone_files:
             for zone_name, filename in zone_files.items():
                 zone = zones[zone_name]
@@ -832,6 +1136,8 @@ def write_root_index(wiki):
         "# I see you forever",
         "",
         "One folder per character. Recording starts at the level that character had when the addon was installed.",
+        "",
+        "Open [dashboard.html](dashboard.html) for charts of time, experience, gold, and deaths.",
         "",
     ]
     if not characters:

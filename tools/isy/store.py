@@ -5,7 +5,7 @@ import sqlite3
 
 from isy.schema import schema_document
 
-DB_VERSION = 1
+DB_VERSION = 2
 
 TABLES = (
     "events",
@@ -191,7 +191,13 @@ def _create(conn):
             map INTEGER,
             x INTEGER,
             y INTEGER,
-            level INTEGER
+            level INTEGER,
+            killer_name TEXT,
+            killer_id TEXT,
+            killer_level INTEGER,
+            ability TEXT,
+            attackers INTEGER,
+            damage INTEGER
         );
         CREATE TABLE segments (
             "character" TEXT NOT NULL,
@@ -382,9 +388,18 @@ def write_sqlite(data_root, model):
             ],
         )
         conn.executemany(
-            'INSERT INTO deaths ("character", t, session, zone, map, x, y, level) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            """
+            INSERT INTO deaths (
+                "character", t, session, zone, map, x, y, level,
+                killer_name, killer_id, killer_level, ability, attackers, damage
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
             [
-                (slug, row["t"], row["session"], row["zone"], row["map"], row["x"], row["y"], row["level"])
+                (
+                    slug, row["t"], row["session"], row["zone"], row["map"], row["x"], row["y"], row["level"],
+                    row["killer_name"], row["killer_id"], row["killer_level"], row["ability"],
+                    row["attackers"], row["damage"],
+                )
                 for row in model["deaths"]
             ],
         )

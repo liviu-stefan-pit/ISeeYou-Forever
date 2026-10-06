@@ -17,6 +17,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from export_wiki import export_save, find_saves, read_lua_string, write_root_index, write_schema
+from isy.dashboard import write_dashboard
+from isy.export import data_root_for
 from isy.parse import clear_saved_events
 
 DEFAULT_WTF = Path(r"C:\Program Files (x86)\World of Warcraft\_classic_beta_\WTF")
@@ -100,6 +102,7 @@ def export_all(saves, wiki, after_save=None):
             )
             if after_save is not None and after_save(save, meta) is False:
                 failed_clear = True
+    write_dashboard(wiki, data_root_for(wiki))
     write_root_index(wiki)
     if not results:
         print("Save changed, but it has no character events yet.", flush=True)

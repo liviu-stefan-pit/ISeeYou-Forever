@@ -18,6 +18,7 @@ from isy.parse import (
     parse_event,
 )
 from isy.schema import name_fields
+from isy.dashboard import write_dashboard
 from isy.store import write_jsonl, write_schema_json, write_sqlite
 from isy.wiki import rebuild_character, write_root_index, write_schema
 
@@ -127,6 +128,7 @@ def main():
         if Path(meta["folder"]).resolve() in exported:
             continue
         results.append(meta)
+    write_dashboard(wiki, data_root_for(wiki))
     write_root_index(wiki)
     if args.path and not results:
         raise SystemExit("Found SavedVariables, but none contained character events.")

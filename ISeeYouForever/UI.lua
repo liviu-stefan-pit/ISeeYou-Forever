@@ -75,7 +75,7 @@ local function buildWindow()
             insets = { left = 11, right = 12, top = 12, bottom = 11 },
         })
     end
-    frame:SetSize(560, 756)
+    frame:SetSize(640, 756)
     frame:SetPoint("CENTER")
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -125,7 +125,7 @@ local function buildWindow()
     pathLabel:SetText("Wiki folder")
 
     pathBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
-    pathBox:SetSize(500, 20)
+    pathBox:SetSize(580, 20)
     pathBox:SetPoint("BOTTOMLEFT", 22, 90)
     pathBox:SetAutoFocus(false)
     pathBox:SetMaxLetters(240)
@@ -156,8 +156,9 @@ local function buildWindow()
     end
 
     loggerOption("shown", "Show logger", 12, ns.SetLoggerShown, ns.LoggerShown)
-    loggerOption("locked", "Lock logger", 160, ns.SetLoggerLocked, ns.LoggerLocked)
-    loggerOption("routes", "Show route dots", 310, ns.SetLoggerRoutes, ns.LoggerRoutes)
+    loggerOption("locked", "Lock logger", 148, ns.SetLoggerLocked, ns.LoggerLocked)
+    loggerOption("routes", "Show route dots", 270, ns.SetLoggerRoutes, ns.LoggerRoutes)
+    loggerOption("stats", "Show rates", 430, ns.SetLoggerStats, ns.LoggerStats)
 
     local allOn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     allOn:SetSize(100, 24)
@@ -222,6 +223,9 @@ function ns.RefreshLoggerChecks()
     end
     if loggerChecks.routes and ns.LoggerRoutes then
         loggerChecks.routes:SetChecked(ns.LoggerRoutes())
+    end
+    if loggerChecks.stats and ns.LoggerStats then
+        loggerChecks.stats:SetChecked(ns.LoggerStats())
     end
 end
 

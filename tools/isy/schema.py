@@ -1,6 +1,6 @@
 """Append-only event fields. New fields are added at the end of a kind, never reordered."""
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 def field(name, typ, since=1, required=False):
@@ -168,6 +168,12 @@ KINDS = {
         field("x", "int"),
         field("y", "int"),
         field("level", "int"),
+        field("killer_name", "str", since=3),
+        field("killer_id", "str", since=3),
+        field("killer_level", "int", since=3),
+        field("ability", "str", since=3),
+        field("attackers", "int", since=3),
+        field("damage", "int", since=3),
     ],
     "unghost": [
         field("zone", "str"),
@@ -356,7 +362,7 @@ def schema_markdown():
         "",
         "This wiki is rebuilt from append-only logs. Raw lines live in each character's `log/` folder. Compiled pages are derived and can be deleted; the next export restores them.",
         "",
-        "Fields are append-only. New fields are added at the end of a kind and never reordered, so older logs still parse. `session_start` carries a `schema` field (2 for the current addon). Sessions without that field are schema 1.",
+        "Fields are append-only. New fields are added at the end of a kind and never reordered, so older logs still parse. `session_start` carries a `schema` field (3 for the current addon). Sessions without that field are schema 1.",
         "",
         "Tracking starts when the addon first loads on that character. A level 20 character has no record of levels 1-19.",
         "",
@@ -372,6 +378,7 @@ def schema_markdown():
         "- `data/isy.sqlite` is one database for every character.",
         "- `data/characters/<slug>/events.jsonl` is one named event per line.",
         "- `data/characters/<slug>/check.md` lists anomalies.",
+        "- `dashboard.html` is one offline page of charts for every character.",
         "",
         "## Event line",
         "",
@@ -394,7 +401,7 @@ def schema_markdown():
         lines.append("| %s | %s |" % (kind, ", ".join(rendered)))
     lines.extend([
         "",
-        "A star marks a field that should not be empty. `(v2)` marks a field added in schema 2; schema 1 lines simply omit it.",
+        "A star marks a field that should not be empty. A suffix such as `(v2)` or `(v3)` is the schema that added the field. Older lines omit it.",
         "",
         "Session experience totals come from `xp` events. Quest pages come from quest events. Money totals come from `money` events. A quest turn-in therefore appears once as experience, once as a quest reward, and once in the money ledger.",
         "",
@@ -405,8 +412,8 @@ def schema_markdown():
         "## Page frontmatter",
         "",
         "Character: `type`, `name`, `realm`, `guid`, `class`, `race`, `faction`, `start_level`, `started`.",
-        "Chapter: `type`, `levels`, `seconds`, `xp`, `copper_in`, `copper_out`.",
-        "Session: `type`, `id`, `character`, `realm`, `started`, `ended`, `level_start`, `level_end`, `xp`, `copper_in`, `copper_out`, `seconds`.",
+        "Chapter: `type`, `levels`, `seconds`, `xp`, `copper_in`, `copper_out`, then `seconds_dead`, `seconds_combat`, `seconds_taxi`, `seconds_npc`, `seconds_afk`, `seconds_moving`, `seconds_rest`, `seconds_idle`.",
+        "Session: `type`, `id`, `character`, `realm`, `started`, `ended`, `level_start`, `level_end`, `xp`, `copper_in`, `copper_out`, `seconds`, then the same `seconds_*` activity keys as a chapter.",
         "Quest: `type`, `id`, `title`, `zone`, `level`, `xp`, `copper`, `duration_seconds`.",
         "Mob: `type`, `name`, `classification`, `creature_type`, `level_min`, `level_max`, `xp_samples`, `xp_average`.",
         "Zone: `type`, `name`, `seconds`, `xp`, `deaths`, `quests`.",

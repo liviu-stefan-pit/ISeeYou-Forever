@@ -24,6 +24,10 @@ end
 
 local function resolveMoney(delta)
     local now = GetTime()
+    if ns.repairUntil and now < ns.repairUntil then
+        ns.repairUntil = nil
+        return "repair", ""
+    end
     local pending = ns.pendingQuestMoney
     if pending and (now - (pending.at or 0)) < 2 and pending.copper == delta then
         ns.pendingQuestMoney = nil
@@ -55,6 +59,12 @@ function ns.InitEconomy()
         end)
         ns.Register(closeEvent, function()
             clearContext(name)
+        end)
+    end
+
+    if type(hooksecurefunc) == "function" and type(RepairAllItems) == "function" then
+        hooksecurefunc("RepairAllItems", function()
+            ns.repairUntil = GetTime() + 2
         end)
     end
 

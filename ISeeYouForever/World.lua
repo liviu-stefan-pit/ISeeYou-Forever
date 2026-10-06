@@ -168,7 +168,25 @@ function ns.InitWorld()
 
     ns.Register("PLAYER_DEAD", function()
         local zone, _, map, x, y = ns.Where()
-        ns.Emit("death", "deaths", zone, map, x, y, ns.lastLevel or 0)
+        local summary = {}
+        if ns.DeathSummary then
+            summary = ns.DeathSummary() or {}
+        end
+        ns.Emit(
+            "death",
+            "deaths",
+            zone,
+            map,
+            x,
+            y,
+            ns.lastLevel or 0,
+            summary.name or "",
+            summary.id or "",
+            summary.level or "",
+            summary.ability or "",
+            summary.attackers or 0,
+            summary.damage or 0
+        )
     end)
 
     ns.Register("PLAYER_UNGHOST", function()

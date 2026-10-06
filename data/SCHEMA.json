@@ -153,6 +153,42 @@
         "required": false,
         "since": 1,
         "type": "int"
+      },
+      {
+        "name": "killer_name",
+        "required": false,
+        "since": 3,
+        "type": "str"
+      },
+      {
+        "name": "killer_id",
+        "required": false,
+        "since": 3,
+        "type": "str"
+      },
+      {
+        "name": "killer_level",
+        "required": false,
+        "since": 3,
+        "type": "int"
+      },
+      {
+        "name": "ability",
+        "required": false,
+        "since": 3,
+        "type": "str"
+      },
+      {
+        "name": "attackers",
+        "required": false,
+        "since": 3,
+        "type": "int"
+      },
+      {
+        "name": "damage",
+        "required": false,
+        "since": 3,
+        "type": "int"
       }
     ],
     "fight_end": [
@@ -1236,5 +1272,5 @@
   },
   "money": "copper",
   "segments": "dead, combat, taxi, npc, afk, moving, rest, idle. Higher priority wins when they overlap.",
-  "version": 2
+  "version": 3
 }

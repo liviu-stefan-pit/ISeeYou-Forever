@@ -76,6 +76,7 @@ If **Wiki folder** in `/isy` already has a path, that path wins. The second argu
 After the first export, open the folder you chose:
 
 - `index.md` is the list of characters.
+- `dashboard.html` is one page of charts: level over time, experience per hour, where the time went, gold by source, deaths, and quest efficiency. Open it in a browser. It does not need the internet.
 - Open a character, then open a level chapter such as `1-10`.
 - `log` is the raw diary. Do not edit those files. The other pages are rebuilt from them.
 
@@ -112,11 +113,13 @@ Every box is something the addon writes down. Leave them all checked unless you 
 
 **All on** and **All off** check or uncheck every box.
 
-**Show logger** shows or hides the live logger. **Lock logger** stops it from being dragged or resized. **Show route dots** adds the map samples to the logger. Those samples are written every few seconds while you walk, so they stay off unless you want them.
+**Show logger** shows or hides the live logger. **Lock logger** stops it from being dragged or resized. **Show route dots** adds the map samples to the logger. Those samples are written every few seconds while you walk, so they stay off unless you want them. **Show rates** turns the experience line on the logger on or off. It is on until you uncheck it.
 
 ## 5. The live logger
 
 A small window sits on the screen while you play. It lists the last 10 things the addon wrote down, in plain words, with the time on the left. The top right shows how many notes are waiting in the save.
+
+Under the title, a line shows experience per hour from the last 15 minutes (or the whole session, if that window is still empty), about how long until the next level, rested experience still in the pool, and how much of this session's experience came from quests versus kills.
 
 Drag the window to move it. Drag the corner to resize it. Right-click it to open `/isy`. The place and size are remembered for every character on the account.
 
